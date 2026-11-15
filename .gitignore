@@ -12,7 +12,8 @@
 /.zed
 /bootstrap/ssr
 /node_modules
-/public/build
+# Production assets are built locally and committed.
+# The host has no Node, so do not ignore public/build.
 /public/hot
 /public/storage
 /storage/*.key
