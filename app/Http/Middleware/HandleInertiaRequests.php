@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Setting;
 use App\Models\Transaction;
+use App\Services\TenantManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
@@ -19,18 +20,53 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $s = Setting::all_settings();
+        $tenant = app(TenantManager::class)->current();
         $user = $request->user();
+        $super = $request->user('super');
 
-        return array_merge(parent::share($request), [
-            'name' => $s['company_name'] ?: config('app.name'),
+        $shared = array_merge(parent::share($request), [
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id, 'name' => $user->name, 'email' => $user->email,
                     'role' => $user->role, 'customer_id' => $user->customer_id,
                     'email_verified_at' => $user->email_verified_at, 'created_at' => $user->created_at, 'updated_at' => $user->updated_at,
                 ] : null,
+                'super' => $super ? [
+                    'id' => $super->id, 'name' => $super->name, 'email' => $super->email,
+                ] : null,
             ],
+            'tenant' => $tenant ? [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'slug' => $tenant->slug,
+            ] : null,
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'token' => fn () => $request->session()->get('token'),
+            ],
+        ]);
+
+        if (! $tenant) {
+            return array_merge($shared, [
+                'name' => config('app.name'),
+                'settings' => [
+                    'company_name' => config('app.name'),
+                    'logo_url' => null,
+                    'brand_color' => '#111827',
+                    'timezone' => config('app.timezone', 'UTC'),
+                    'low_data_mode' => false,
+                    'language' => 'en',
+                    'currency' => 'USD',
+                ],
+                'balance' => null,
+            ]);
+        }
+
+        $s = Setting::all_settings();
+
+        return array_merge($shared, [
+            'name' => $s['company_name'] ?: config('app.name'),
             'settings' => [
                 'company_name' => $s['company_name'],
                 'logo_url' => $s['logo_path'] ? Storage::disk('public')->url($s['logo_path']) : null,
@@ -41,11 +77,6 @@ class HandleInertiaRequests extends Middleware
                 'currency' => $s['currency'],
             ],
             'balance' => fn () => $user?->isAdmin() ? Transaction::balance() : null,
-            'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-                'token' => fn () => $request->session()->get('token'),
-            ],
         ]);
     }
 }

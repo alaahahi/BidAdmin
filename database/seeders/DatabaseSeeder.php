@@ -38,10 +38,22 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        if (! app(\App\Services\TenantManager::class)->current()) {
+            $this->call(CentralDatabaseSeeder::class);
+
+            return;
+        }
+
         Setting::put(['company_name' => 'BidAdmin', 'brand_color' => '#111827', 'timezone' => 'Asia/Baghdad', 'language' => 'en']);
 
-        $admin = User::create(['name' => 'Admin', 'email' => 'admin@bidadmin.test', 'password' => 'password', 'role' => 'admin', 'email_verified_at' => now()]);
-        User::create(['name' => 'Salam Jalal', 'email' => 'salam@bidadmin.test', 'password' => 'password', 'role' => 'admin', 'email_verified_at' => now()]);
+        $admin = User::query()->firstOrCreate(
+            ['email' => 'admin@bidadmin.test'],
+            ['name' => 'Admin', 'password' => 'password', 'role' => 'admin', 'email_verified_at' => now()],
+        );
+        User::query()->firstOrCreate(
+            ['email' => 'salam@bidadmin.test'],
+            ['name' => 'Salam Jalal', 'password' => 'password', 'role' => 'admin', 'email_verified_at' => now()],
+        );
 
         // Auction accounts
         $acc = [];
@@ -68,7 +80,10 @@ class DatabaseSeeder extends Seeder
         ])->values()->map(fn ($c, $i) => Customer::create($c + ['code' => sprintf('BA-%04d', 1001 + $i), 'phone_code' => '+964']));
 
         // Demo customer portal login
-        User::create(['name' => 'NASHWAN', 'email' => 'customer@bidadmin.test', 'password' => 'password', 'role' => 'customer', 'customer_id' => $customers[1]->id, 'email_verified_at' => now()]);
+        User::query()->updateOrCreate(
+            ['email' => 'customer@bidadmin.test'],
+            ['name' => 'NASHWAN', 'password' => 'password', 'role' => 'customer', 'customer_id' => $customers[1]->id, 'email_verified_at' => now()],
+        );
 
         // Assignments (with history)
         $assign = function (Account $a, array $customerIdx, array $brokerIdx = []) use ($customers, $brokers, $admin) {

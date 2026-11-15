@@ -311,6 +311,42 @@ const translations: Record<string, { ar: string; ckb: string }> = {
         ar: 'لغة الواجهة. العربية والكردية السورانية تقلبان التخطيط من اليمين لليسار.',
         ckb: 'زمانی ڕووکار. عەرەبی و کوردی سۆرانی ڕێکخستن دەکەنە ڕاست بۆ چەپ.',
     },
+
+    // Super admin (ADD only — do not remove keys above)
+    'Super Admin': { ar: 'المشرف العام', ckb: 'سوپەر ئەدمین' },
+    Tenants: { ar: 'المستأجرون', ckb: 'کرێچیەکان' },
+    'Create Tenant': { ar: 'إنشاء مستأجر', ckb: 'دروستکردنی کرێچی' },
+    'Edit Tenant': { ar: 'تعديل مستأجر', ckb: 'دەستکاری کرێچی' },
+    Suspend: { ar: 'إيقاف', ckb: 'ڕاگرتن' },
+    Activate: { ar: 'تفعيل', ckb: 'چالاککردن' },
+    Slug: { ar: 'المعرّف', ckb: 'سلەگ' },
+    'Admin Email': { ar: 'بريد المسؤول', ckb: 'ئیمەیڵی ئەدمین' },
+    'Admin Password': { ar: 'كلمة مرور المسؤول', ckb: 'وشەی نهێنی ئەدمین' },
+    'Database Name': { ar: 'اسم قاعدة البيانات', ckb: 'ناوی داتابەیس' },
+    suspended: { ar: 'موقوف', ckb: 'ڕاگیراو' },
+    'Open Tenant': { ar: 'فتح المستأجر', ckb: 'کردنەوەی کرێچی' },
+    'Sign in to Super Admin': { ar: 'تسجيل دخول المشرف العام', ckb: 'چوونەژووری سوپەر ئەدمین' },
+    'Manage all BidAdmin tenants': { ar: 'إدارة كل مستأجري BidAdmin', ckb: 'بەڕێوەبردنی هەموو کرێچیەکانی BidAdmin' },
+    'Tenant name': { ar: 'اسم المستأجر', ckb: 'ناوی کرێچی' },
+    'No tenants yet.': { ar: 'لا يوجد مستأجرون بعد.', ckb: 'هێشتا هیچ کرێچیەک نییە.' },
+    'Soft delete keeps the tenant database.': {
+        ar: 'الحذف الناعم يبقي قاعدة بيانات المستأجر.',
+        ckb: 'سڕینەوەی نەرم داتابەیسەکە دەهێڵێتەوە.',
+    },
+    'Tenant Admins': { ar: 'مسؤولو المستأجر', ckb: 'ئەدمینەکانی کرێچی' },
+    'Enter System': { ar: 'دخول النظام', ckb: 'چوونە ناو سیستەم' },
+    'Shared database mode: super admin and all company data live in one DB. Separate DBs stay available later.': {
+        ar: 'وضع قاعدة واحدة: المشرف العام وكل بيانات الشركة في نفس القاعدة. قواعد منفصلة تبقى جاهزة لاحقاً.',
+        ckb: 'دۆخی داتابەیسی هاوبەش: سوپەر ئەدمین و هەموو داتای کۆمپانیا لە یەک داتابەیس. داتابەیسی جیاواز بۆ دواتر ئامادەیە.',
+    },
+    'Each tenant has its own database. Super admin sees tenant admins from that DB.': {
+        ar: 'كل مستأجر له قاعدة بيانات خاصة. المشرف العام يرى مسؤولي المستأجر من تلك القاعدة.',
+        ckb: 'هەر کرێچیەک داتابەیسی خۆی هەیە. سوپەر ئەدمین ئەدمینەکانی کرێچی لەو داتابەیسە دەبینێت.',
+    },
+    'No admin accounts found in this tenant database.': {
+        ar: 'لا توجد حسابات مسؤول في قاعدة بيانات هذا المستأجر.',
+        ckb: 'هیچ هەژماری ئەدمین لە داتابەیسی ئەم کرێچیەدا نییە.',
+    },
 };
 
 function buildDict(lang: 'ar' | 'ckb'): Record<string, string> {

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
+    protected $connection = 'tenant';
     use HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];

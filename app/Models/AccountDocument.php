@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AccountDocument extends Model
 {
+    protected $connection = 'tenant';
     public const GROUPS = ['Identity' => ['Passport', 'National ID', 'Driver License'], 'Business' => ['Trade License', 'Tax Certificate', 'Dealer License'], 'Agreements' => ['Broker Agreement', 'Power of Attorney'], 'Other' => ['Other']];
 
     protected $guarded = ['id'];

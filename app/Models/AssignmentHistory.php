@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AssignmentHistory extends Model
 {
+    protected $connection = 'tenant';
     protected $guarded = ['id'];
 
     public function account()

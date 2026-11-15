@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Setting extends Model
 {
+    protected $connection = 'tenant';
     protected $guarded = ['id'];
 
     public const DEFAULTS = [

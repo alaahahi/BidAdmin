@@ -215,7 +215,7 @@ class BidAdminTest extends TestCase
         $this->assertEquals(1, $customer->user()->first()->tokens()->count());
 
         auth()->logout();
-        $this->post('/login', ['email' => 'portal@example.com', 'password' => 'password123'])->assertRedirect('/dashboard');
+        $this->post('/login', ['email' => 'portal@example.com', 'password' => 'password123'])->assertRedirect(route('dashboard'));
         $this->assertDatabaseHas('activity_logs', ['type' => 'login', 'customer_id' => $customer->id]);
     }
 

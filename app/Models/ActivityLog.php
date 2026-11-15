@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ActivityLog extends Model
 {
+    protected $connection = 'tenant';
     public const TYPES = ['login' => 'Login', 'lot_view' => 'Lot View', 'bid' => 'Bid Placed', 'watchlist_add' => 'Watchlist Add', 'watchlist_remove' => 'Watchlist Remove', 'won' => 'Car Won'];
 
     protected $guarded = ['id'];

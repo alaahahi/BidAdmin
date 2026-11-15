@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Account extends Model
 {
+    protected $connection = 'tenant';
     use HasFactory, SoftDeletes;
 
     public const PROVIDERS = ['copart' => 'Copart', 'iaai' => 'IAAI', 'manheim' => 'Manheim', 'edgepipeline' => 'EdgePipeline', 'npa' => 'NPA'];

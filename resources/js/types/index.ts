@@ -1,7 +1,8 @@
 import { LucideIcon } from 'lucide-react';
 
 export interface Auth {
-    user: User;
+    user: User | null;
+    super?: { id: number; name: string; email: string } | null;
 }
 
 export interface BreadcrumbItem {
@@ -30,6 +31,7 @@ export interface SharedData {
     name: string;
     auth: Auth;
     settings: AppSettings;
+    tenant?: { id: number; name: string; slug: string } | null;
     balance: number | null;
     flash: { success?: string | null; error?: string | null; token?: string | null };
     [key: string]: unknown;

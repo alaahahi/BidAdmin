@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 
 class Quotation extends Model
 {
+    protected $connection = 'tenant';
     protected $guarded = ['id'];
 
     protected function casts(): array

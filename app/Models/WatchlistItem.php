@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class WatchlistItem extends Model
 {
+    protected $connection = 'tenant';
     protected $guarded = ['id'];
 
     protected function casts(): array
