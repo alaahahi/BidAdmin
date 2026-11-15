@@ -2,27 +2,26 @@
 
 نسخة مصغّرة من BidManager.io لإدارة حسابات مزادات السيارات.
 
-**الوضع الحالي:** قاعدة واحدة مشتركة (`bidadmin`) — السوبر أدمن يرى كل البيانات. مسار `/{tenant}` وكود قواعد منفصلة جاهز لاحقاً عبر `TENANCY_SEPARATE_DATABASES=true`.
+**الوضع الحالي:** SQLite ملف واحد (`database/database.sqlite`) — السوبر أدمن يرى كل البيانات. مناسب لـ cPanel. MySQL يبقى متاحاً عبر `DB_CONNECTION=mysql`.
 
-**Stack:** Laravel 12 · PHP 8.2+ · MySQL (XAMPP) · Inertia 2 · React 19 · TypeScript · Vite · Tailwind CSS 4 · shadcn/ui · Sanctum · DomPDF.
+**Stack:** Laravel 12 · PHP 8.2+ · SQLite (أو MySQL) · Inertia 2 · React 19 · TypeScript · Vite · Tailwind CSS 4 · shadcn/ui · Sanctum · DomPDF.
 
 ---
 
-## العربية — التشغيل على XAMPP
+## العربية — التشغيل (cPanel / محلي)
 
 ### المتطلبات
-- XAMPP مع **PHP 8.2+** و MySQL
+- PHP 8.2+ مع امتداد `pdo_sqlite`
 - Composer 2 · Node.js 18+
 
 ### الخطوات
-1. شغّل **Apache** و **MySQL** من XAMPP.
-2. من phpMyAdmin أنشئ قاعدة اسمها `bidadmin` (utf8mb4_unicode_ci).
-3. من مجلد المشروع:
+1. من مجلد المشروع:
    ```bat
    cd C:\xampp\htdocs\BidAdmin\BidAdmin
    composer install
    copy .env.example .env
    php artisan key:generate
+   if not exist database\database.sqlite type nul > database\database.sqlite
    php artisan migrate --seed
    php artisan storage:link
    npm install
@@ -45,8 +44,8 @@
 | Admin | `admin@bidadmin.test` | `password` |
 | Customer | `customer@bidadmin.test` | `password` |
 
-### وضع القواعد المنفصلة لاحقاً
-في `.env` ضع `TENANCY_SEPARATE_DATABASES=true` — عندها كل مستأجر يحصل على `bidadmin_{slug}`.
+### MySQL / قواعد منفصلة لاحقاً
+`DB_CONNECTION=mysql` ثم اضبط المضيف والمستخدم. لقواعد منفصلة: `TENANCY_SEPARATE_DATABASES=true` (MySQL فقط).
 
 ### أوامر المستأجرين
 ```bat
@@ -64,7 +63,7 @@ curl -X POST http://127.0.0.1:8000/demo/api/bids \
 ```
 
 ### الاختبارات
-تحتاج MySQL. أنشئ قاعدة `bidadmin_testing` ثم:
+تستخدم SQLite (`database/testing.sqlite`) تلقائياً:
 ```bat
 php artisan test
 ```

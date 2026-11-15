@@ -9,7 +9,7 @@ class SuperAdmin extends Authenticatable
 {
     use Notifiable;
 
-    protected $connection = 'mysql';
+    protected $connection = 'central';
 
     protected $fillable = ['name', 'email', 'password'];
 

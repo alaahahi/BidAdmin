@@ -9,7 +9,7 @@ class Tenant extends Model
 {
     use SoftDeletes;
 
-    protected $connection = 'mysql';
+    protected $connection = 'central';
 
     protected $fillable = ['name', 'slug', 'db_name', 'admin_email', 'status'];
 

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection('mysql')->create('super_admins', function (Blueprint $table) {
+        Schema::connection('central')->create('super_admins', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -20,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('mysql')->dropIfExists('super_admins');
+        Schema::connection('central')->dropIfExists('super_admins');
     }
 };

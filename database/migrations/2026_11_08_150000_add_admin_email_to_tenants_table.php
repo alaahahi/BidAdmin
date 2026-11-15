@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection('mysql')->table('tenants', function (Blueprint $table) {
+        Schema::connection('central')->table('tenants', function (Blueprint $table) {
             $table->string('admin_email')->nullable()->after('db_name');
         });
     }
 
     public function down(): void
     {
-        Schema::connection('mysql')->table('tenants', function (Blueprint $table) {
+        Schema::connection('central')->table('tenants', function (Blueprint $table) {
             $table->dropColumn('admin_email');
         });
     }

@@ -16,9 +16,15 @@ class TenantsImportLegacy extends Command
 
     public function handle(TenantManager $tenants): int
     {
+        if ($tenants->centralDriver() !== 'mysql') {
+            $this->error('tenants:import-legacy requires DB_CONNECTION=mysql.');
+
+            return self::FAILURE;
+        }
+
         $slug = (string) $this->argument('slug');
         $name = (string) ($this->option('name') ?: ucfirst($slug));
-        $source = (string) ($this->option('source') ?: config('database.connections.mysql.database'));
+        $source = (string) ($this->option('source') ?: $tenants->centralDatabase());
 
         $tenants->validateSlug($slug);
 
@@ -40,7 +46,8 @@ class TenantsImportLegacy extends Command
         $tenants->switchTo($tenant);
         $tenants->migrateTenant();
 
-        $tables = collect(DB::connection('mysql')->select('SHOW TABLES'))
+        $central = $tenants->centralConnection();
+        $tables = collect(DB::connection($central)->select('SHOW TABLES'))
             ->map(fn ($row) => array_values((array) $row)[0])
             ->reject(fn ($t) => in_array($t, ['migrations', 'super_admins', 'tenants'], true))
             ->filter(fn ($t) => Schema::connection('tenant')->hasTable($t))
@@ -48,7 +55,7 @@ class TenantsImportLegacy extends Command
 
         DB::connection('tenant')->statement('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
-            $rows = DB::connection('mysql')->table($table)->get();
+            $rows = DB::connection($central)->table($table)->get();
             if ($rows->isEmpty()) {
                 continue;
             }

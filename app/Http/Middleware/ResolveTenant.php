@@ -21,7 +21,7 @@ class ResolveTenant
         if (! is_string($slug) || $slug === '') {
             config([
                 'session.cookie' => 'bidadmin_super_session',
-                'session.connection' => 'mysql',
+                'session.connection' => 'central',
             ]);
 
             return $next($request);

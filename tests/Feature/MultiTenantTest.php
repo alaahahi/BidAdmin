@@ -24,8 +24,10 @@ class MultiTenantTest extends TestCase
         ]);
 
         $manager = app(TenantManager::class);
+        $central = $manager->centralConnection();
+
         if ($manager->separateDatabases()) {
-            DB::connection('mysql')->statement('DROP DATABASE IF EXISTS `bidadmin_acme`');
+            DB::connection($central)->statement('DROP DATABASE IF EXISTS `bidadmin_acme`');
         }
         Tenant::withTrashed()->where('slug', 'acme')->forceDelete();
         User::on('tenant')->where('email', 'admin@acme.test')->delete();
@@ -40,17 +42,17 @@ class MultiTenantTest extends TestCase
             ])
             ->assertRedirect(route('super.dashboard'));
 
-        $this->assertDatabaseHas('tenants', ['slug' => 'acme', 'status' => 'active'], 'mysql');
+        $this->assertDatabaseHas('tenants', ['slug' => 'acme', 'status' => 'active'], $central);
 
         if ($manager->separateDatabases()) {
             $this->assertTrue(
-                collect(DB::connection('mysql')->select("SHOW DATABASES LIKE 'bidadmin_acme'"))->isNotEmpty()
+                collect(DB::connection($central)->select("SHOW DATABASES LIKE 'bidadmin_acme'"))->isNotEmpty()
             );
         } else {
             $this->assertDatabaseHas('tenants', [
                 'slug' => 'acme',
                 'db_name' => $manager->centralDatabase(),
-            ], 'mysql');
+            ], $central);
         }
 
         $manager->switchTo(Tenant::where('slug', 'acme')->firstOrFail());
@@ -64,8 +66,9 @@ class MultiTenantTest extends TestCase
             $this->markTestSkipped('Isolation requires TENANCY_SEPARATE_DATABASES=true');
         }
 
-        DB::connection('mysql')->statement('DROP DATABASE IF EXISTS `bidadmin_alpha`');
-        DB::connection('mysql')->statement('DROP DATABASE IF EXISTS `bidadmin_beta`');
+        $central = $manager->centralConnection();
+        DB::connection($central)->statement('DROP DATABASE IF EXISTS `bidadmin_alpha`');
+        DB::connection($central)->statement('DROP DATABASE IF EXISTS `bidadmin_beta`');
         Tenant::withTrashed()->whereIn('slug', ['alpha', 'beta'])->forceDelete();
 
         $manager->create('Alpha', 'alpha', 'alpha@test.com', 'password');

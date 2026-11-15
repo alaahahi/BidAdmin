@@ -25,7 +25,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        if ($this->app->environment('testing') && config('database.default') === 'mysql') {
+        if ($this->app->environment('testing')) {
             $this->bootTenant();
         }
     }
@@ -38,7 +38,7 @@ abstract class TestCase extends BaseTestCase
 
         if ($manager->separateDatabases()) {
             $dbName = Tenant::dbNameFor($this->tenantSlug);
-            DB::connection('mysql')->statement("DROP DATABASE IF EXISTS `{$dbName}`");
+            DB::connection($manager->centralConnection())->statement("DROP DATABASE IF EXISTS `{$dbName}`");
             $manager->create('Demo', $this->tenantSlug, 'admin@bidadmin.test', 'password');
         } else {
             $this->ensureSharedTenantSchema($manager);
@@ -68,7 +68,7 @@ abstract class TestCase extends BaseTestCase
 
     /**
      * Install app tables into the shared testing DB once per process.
-     * Commits the open RefreshDatabase transaction first so MySQL DDL does not hang.
+     * On MySQL, commits the open RefreshDatabase transaction first so DDL does not hang.
      */
     private function ensureSharedTenantSchema(TenantManager $manager): void
     {
@@ -80,14 +80,21 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        try {
-            DB::connection('mysql')->unprepared('COMMIT');
-        } catch (\Throwable) {
-            //
+        $central = $manager->centralConnection();
+
+        if ($manager->centralDriver() === 'mysql') {
+            try {
+                DB::connection($central)->unprepared('COMMIT');
+            } catch (\Throwable) {
+                //
+            }
         }
 
         $manager->migrateTenant();
-        DB::connection('mysql')->beginTransaction();
+
+        if ($manager->centralDriver() === 'mysql') {
+            DB::connection($central)->beginTransaction();
+        }
     }
 
     protected function tenantUrl(string $uri): string

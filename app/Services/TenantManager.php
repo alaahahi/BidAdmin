@@ -18,9 +18,19 @@ class TenantManager
         return (bool) config('tenancy.separate_databases');
     }
 
+    public function centralConnection(): string
+    {
+        return 'central';
+    }
+
+    public function centralDriver(): string
+    {
+        return (string) config('database.connections.central.driver');
+    }
+
     public function centralDatabase(): string
     {
-        return (string) config('database.connections.mysql.database');
+        return (string) config('database.connections.central.database');
     }
 
     public function databaseNameForSlug(string $slug): string
@@ -104,8 +114,14 @@ class TenantManager
 
     public function createDatabase(string $dbName): void
     {
+        if ($this->centralDriver() !== 'mysql') {
+            throw ValidationException::withMessages([
+                'slug' => 'Separate tenant databases require MySQL (DB_CONNECTION=mysql).',
+            ]);
+        }
+
         $safe = str_replace('`', '``', $dbName);
-        DB::connection('mysql')->statement(
+        DB::connection($this->centralConnection())->statement(
             "CREATE DATABASE IF NOT EXISTS `{$safe}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
         );
     }
@@ -162,6 +178,14 @@ class TenantManager
                 $t->string('password');
                 $t->rememberToken();
                 $t->timestamps();
+            });
+        }
+
+        if (! Schema::connection('tenant')->hasTable('password_reset_tokens')) {
+            Schema::connection('tenant')->create('password_reset_tokens', function ($t) {
+                $t->string('email')->primary();
+                $t->string('token');
+                $t->timestamp('created_at')->nullable();
             });
         }
 
