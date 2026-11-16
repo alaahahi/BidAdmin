@@ -51,6 +51,8 @@ Route::prefix('{tenant}')->group(function () {
                 Route::delete('accounts/{account}', [AccountController::class, 'destroy'])->name('accounts.destroy');
                 Route::post('accounts/{id}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
                 Route::post('accounts/{account}/reveal-password', [AccountController::class, 'revealPassword'])->name('accounts.reveal');
+                Route::put('accounts/{account}/session', [AccountController::class, 'upsertSession'])->name('accounts.session');
+                Route::post('accounts/{account}/session/test', [AccountController::class, 'testSession'])->name('accounts.session.test');
                 Route::put('accounts/{account}/customers', [AccountController::class, 'syncCustomers'])->name('accounts.customers');
                 Route::put('accounts/{account}/brokers', [AccountController::class, 'syncBrokers'])->name('accounts.brokers');
                 Route::post('accounts/{account}/documents', [AccountController::class, 'uploadDocument'])->name('accounts.documents.store');
@@ -65,6 +67,7 @@ Route::prefix('{tenant}')->group(function () {
                 Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
                 Route::put('customers/{customer}/accounts', [CustomerController::class, 'syncAccounts'])->name('customers.accounts');
                 Route::put('customers/{customer}/credentials', [CustomerController::class, 'credentials'])->name('customers.credentials');
+                Route::post('customers/{customer}/login-code', [CustomerController::class, 'regenerateLoginCode'])->name('customers.login-code');
                 Route::post('customers/{customer}/tokens', [CustomerController::class, 'createToken'])->name('customers.tokens.store');
                 Route::delete('customers/{customer}/tokens/{token}', [CustomerController::class, 'revokeToken'])->name('customers.tokens.destroy');
 

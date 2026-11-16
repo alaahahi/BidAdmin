@@ -152,8 +152,9 @@ return new class extends Migration
 
         Schema::create('activity_logs', function (Blueprint $t) {
             $t->id();
-            $t->string('type', 30)->index(); // login | lot_view | bid | watchlist_add | watchlist_remove | won
+            $t->string('type', 30)->index(); // login | lot_view | bid | watchlist_add | watchlist_remove | won | mcp_tool
             $t->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
+            $t->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $t->foreignId('account_id')->nullable()->constrained()->nullOnDelete();
             $t->string('provider', 30)->nullable();
             $t->string('target')->nullable(); // lot number / page
@@ -161,9 +162,11 @@ return new class extends Migration
             $t->decimal('amount', 12, 2)->nullable();
             $t->string('ip_address', 45)->nullable();
             $t->string('app', 40)->nullable();
+            $t->string('source', 20)->nullable()->index(); // web | extension | mcp
             $t->json('meta')->nullable();
             $t->timestamps();
         });
+
 
         Schema::create('invoices', function (Blueprint $t) {
             $t->id();

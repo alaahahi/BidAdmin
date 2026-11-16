@@ -52,4 +52,10 @@ class Customer extends Model
     {
         return $this->belongsToMany(ShippingRate::class);
     }
+
+    /** Active unpaid won vehicles count toward car_limit. */
+    public function activeVehicleCount(): int
+    {
+        return (int) $this->invoices()->where('status', '!=', 'paid')->count();
+    }
 }

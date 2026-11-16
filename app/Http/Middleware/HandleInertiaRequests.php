@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Setting;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\TenantManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -20,8 +21,14 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $tenant = app(TenantManager::class)->current();
-        $user = $request->user();
+        // Super routes must not inherit a lingering tenant context (tests / prior switchTo).
+        $onSuper = $request->is('super') || $request->is('super/*');
+        $tenant = $onSuper ? null : app(TenantManager::class)->current();
+
+        // Never use the default guard: actingAs(..., 'super') calls shouldUse('super'),
+        // so user() would return SuperAdmin (no role / isAdmin()).
+        $webUser = $request->user('web');
+        $user = $webUser instanceof User ? $webUser : null;
         $super = $request->user('super');
 
         $shared = array_merge(parent::share($request), [
@@ -44,6 +51,8 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'token' => fn () => $request->session()->get('token'),
+                'migrate_output' => fn () => $request->session()->get('migrate_output'),
+                'migrate_scope' => fn () => $request->session()->get('migrate_scope'),
             ],
         ]);
 

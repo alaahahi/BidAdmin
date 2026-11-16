@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Customer;
 use App\Models\User;
+use App\Services\CustomerLoginCodeService;
 use App\Support\Analytics;
 use App\Support\Csv;
 use App\Support\Lists;
@@ -15,6 +16,8 @@ use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
+    public function __construct(private CustomerLoginCodeService $loginCodes) {}
+
     private function query(Request $r)
     {
         $q = Customer::query()->with(['accounts:id,provider,region,username,status'])
@@ -93,6 +96,7 @@ class CustomerController extends Controller
     {
         $data = $r->validate($this->rules());
         $data['code'] = $data['code'] ?? null ?: 'C-'.strtoupper(Str::random(6));
+        $data['login_code'] = $data['login_code'] ?? $this->loginCodes->generateUnique();
         $customer = Customer::create($data);
 
         return redirect()->route('customers.show', $customer)->with('success', 'Customer added.');
@@ -101,6 +105,10 @@ class CustomerController extends Controller
     public function show(Request $r, int $id)
     {
         $customer = Customer::withTrashed()->with(['accounts', 'user:id,customer_id,email,name'])->findOrFail($id);
+        if (! $customer->trashed()) {
+            $this->loginCodes->ensure($customer);
+            $customer->refresh();
+        }
         $tab = $r->input('tab', 'details');
         $data = [
             'customer' => $customer,
@@ -177,6 +185,13 @@ class CustomerController extends Controller
         $user ? $user->update($attrs) : User::create($attrs + ['email_verified_at' => now()]);
 
         return back()->with('success', 'Login saved.');
+    }
+
+    public function regenerateLoginCode(Customer $customer)
+    {
+        $this->loginCodes->regenerate($customer);
+
+        return back()->with('success', 'App login code regenerated.');
     }
 
     /** Issue a Sanctum API token for the customer's browser extension. */

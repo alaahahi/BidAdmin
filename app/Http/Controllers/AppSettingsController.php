@@ -29,7 +29,14 @@ class AppSettingsController extends Controller
         $section = $r->input('section');
         $rules = match ($section) {
             'branding' => ['company_name' => ['required', 'string', 'max:100'], 'brand_color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/']],
-            'app' => ['currency' => ['required', Rule::in(['USD', 'CAD', 'EUR', 'GBP', 'AED', 'IQD'])], 'customer_portal' => ['boolean'], 'customers_can_see_invoices' => ['boolean'], 'default_per_page' => ['required', Rule::in(['10', '25', '50', '100', 10, 25, 50, 100])], 'session_lifetime' => ['required', 'integer', 'min:5', 'max:10080']],
+            'app' => [
+                'currency' => ['required', Rule::in(['USD', 'CAD', 'EUR', 'GBP', 'AED', 'IQD'])],
+                'customer_portal' => ['boolean'],
+                'customers_can_see_invoices' => ['boolean'],
+                'default_per_page' => ['required', Rule::in(['10', '25', '50', '100', 10, 25, 50, 100])],
+                'session_lifetime' => ['required', 'integer', 'min:5', 'max:10080'],
+                'blocked_countries' => ['nullable', 'string', 'max:200'],
+            ],
             'timezone' => ['timezone' => ['required', 'timezone'], 'invoice_timezone' => ['required', Rule::in(['account', 'invoice'])]],
             'performance' => ['low_data_mode' => ['boolean']],
             'language' => ['language' => ['required', Rule::in(['en', 'ar', 'ckb'])]],

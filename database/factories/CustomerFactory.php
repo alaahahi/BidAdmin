@@ -12,6 +12,7 @@ class CustomerFactory extends Factory
         return [
             'name' => strtoupper(fake()->name()),
             'code' => 'C-'.strtoupper(Str::random(6)),
+            'login_code' => strtoupper(fake()->unique()->bothify('????????')),
             'email' => fake()->unique()->safeEmail(),
             'phone_code' => '+964',
             'phone' => '750'.fake()->numerify('#######'),

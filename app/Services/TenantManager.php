@@ -131,9 +131,13 @@ class TenantManager
         if (! $this->separateDatabases()) {
             $this->prepareSharedSchema();
 
-            // Shared DB: schema is global — skip migrate if app tables already exist
-            // (avoids migrator lock hangs when create() runs inside HTTP tests).
+            // Shared DB: schema is global — skip full migrate if app tables already exist
+            // (avoids recreating personal_access_tokens / corrupting sqlite mid-suite).
             if (Schema::connection('tenant')->hasTable('customers')) {
+                $this->ensureActivityLogMcpColumns();
+                $this->ensureCustomerLoginCodeColumn();
+                $this->ensureAuctionSessionsTable();
+
                 return;
             }
         }
@@ -145,27 +149,81 @@ class TenantManager
         ]);
     }
 
+    /** Additive MCP columns for existing shared databases that skipped later migrations. */
+    private function ensureActivityLogMcpColumns(): void
+    {
+        if (! Schema::connection('tenant')->hasTable('activity_logs')) {
+            return;
+        }
+
+        if (! Schema::connection('tenant')->hasColumn('activity_logs', 'user_id')) {
+            Schema::connection('tenant')->table('activity_logs', function ($t) {
+                $t->unsignedBigInteger('user_id')->nullable()->after('customer_id');
+                $t->index('user_id');
+            });
+        }
+
+        if (! Schema::connection('tenant')->hasColumn('activity_logs', 'source')) {
+            Schema::connection('tenant')->table('activity_logs', function ($t) {
+                $t->string('source', 20)->nullable()->index()->after('app');
+            });
+        }
+    }
+
+    private function ensureCustomerLoginCodeColumn(): void
+    {
+        if (! Schema::connection('tenant')->hasTable('customers')) {
+            return;
+        }
+
+        if (! Schema::connection('tenant')->hasColumn('customers', 'login_code')) {
+            Schema::connection('tenant')->table('customers', function ($t) {
+                $t->string('login_code', 8)->nullable()->unique()->after('code');
+            });
+        }
+    }
+
+    private function ensureAuctionSessionsTable(): void
+    {
+        if (Schema::connection('tenant')->hasTable('auction_sessions')) {
+            return;
+        }
+
+        Schema::connection('tenant')->create('auction_sessions', function ($t) {
+            $t->id();
+            $t->foreignId('account_id')->constrained()->cascadeOnDelete();
+            $t->text('cookies')->nullable();
+            $t->text('local_storage')->nullable();
+            $t->string('user_agent')->nullable();
+            $t->timestamp('captured_at')->nullable();
+            $t->timestamp('expires_at')->nullable();
+            $t->timestamps();
+            $t->softDeletes();
+            $t->unique('account_id');
+        });
+    }
+
     /**
      * In shared-DB mode the central connection already has sessions (and may
-     * share users/cache/jobs). Mark those Laravel defaults as migrated so the
-     * tenant path can apply app tables without colliding.
+     * share users/cache/jobs/tokens). Mark colliding Laravel defaults as migrated
+     * and only CREATE tables that are missing so tenant migrate never crashes.
      */
     private function prepareSharedSchema(): void
     {
-        $batch = ((int) DB::connection('tenant')->table('migrations')->max('batch')) + 1;
+        if (! Schema::connection('tenant')->hasTable('migrations')) {
+            return;
+        }
 
-        foreach ([
+        $this->markSharedMigrations([
             '0001_01_01_000000_create_users_table',
             '0001_01_01_000001_create_cache_table',
             '0001_01_01_000002_create_jobs_table',
-        ] as $migration) {
-            $exists = DB::connection('tenant')->table('migrations')->where('migration', $migration)->exists();
-            if ($exists) {
-                continue;
-            }
-            DB::connection('tenant')->table('migrations')->insert([
-                'migration' => $migration,
-                'batch' => $batch,
+        ]);
+
+        // Sanctum tokens often already exist from a prior shared migrate; never re-CREATE.
+        if (Schema::connection('tenant')->hasTable('personal_access_tokens')) {
+            $this->markSharedMigrations([
+                '2026_11_07_110451_create_personal_access_tokens_table',
             ]);
         }
 
@@ -233,6 +291,41 @@ class TenantManager
                 $t->longText('exception');
                 $t->timestamp('failed_at')->useCurrent();
             });
+        }
+
+        if (! Schema::connection('tenant')->hasTable('personal_access_tokens')) {
+            Schema::connection('tenant')->create('personal_access_tokens', function ($t) {
+                $t->id();
+                $t->morphs('tokenable');
+                $t->text('name');
+                $t->string('token', 64)->unique();
+                $t->text('abilities')->nullable();
+                $t->timestamp('last_used_at')->nullable();
+                $t->timestamp('expires_at')->nullable()->index();
+                $t->timestamps();
+            });
+            $this->markSharedMigrations([
+                '2026_11_07_110451_create_personal_access_tokens_table',
+            ]);
+        }
+    }
+
+    /**
+     * @param  list<string>  $migrations
+     */
+    private function markSharedMigrations(array $migrations): void
+    {
+        $batch = ((int) DB::connection('tenant')->table('migrations')->max('batch')) + 1;
+
+        foreach ($migrations as $migration) {
+            $exists = DB::connection('tenant')->table('migrations')->where('migration', $migration)->exists();
+            if ($exists) {
+                continue;
+            }
+            DB::connection('tenant')->table('migrations')->insert([
+                'migration' => $migration,
+                'batch' => $batch,
+            ]);
         }
     }
 

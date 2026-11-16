@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Shared DB: central/tenant may already have Sanctum tokens — never re-CREATE.
+        if (Schema::hasTable('personal_access_tokens')) {
+            return;
+        }
+
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');

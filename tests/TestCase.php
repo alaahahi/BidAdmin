@@ -18,7 +18,7 @@ abstract class TestCase extends BaseTestCase
     protected array $tenantAppRoots = [
         'login', 'logout', 'forgot-password', 'reset-password', 'verify-email', 'confirm-password',
         'dashboard', 'accounts', 'invoices', 'customers', 'brokers', 'finance', 'explorer',
-        'shipping-rates', 'quotations', 'numbers', 'settings', 'q',
+        'shipping-rates', 'quotations', 'numbers', 'settings', 'q', 'mcp',
     ];
 
     protected function setUp(): void
@@ -68,7 +68,8 @@ abstract class TestCase extends BaseTestCase
 
     /**
      * Install app tables into the shared testing DB once per process.
-     * On MySQL, commits the open RefreshDatabase transaction first so DDL does not hang.
+     * Commits open RefreshDatabase transactions before DDL (sqlite + mysql)
+     * so CREATE TABLE does not auto-commit / corrupt the file mid-suite.
      */
     private function ensureSharedTenantSchema(TenantManager $manager): void
     {
@@ -76,25 +77,71 @@ abstract class TestCase extends BaseTestCase
         DB::purge('tenant');
         DB::reconnect('tenant');
 
+        // Shared DB: never re-CREATE tenant tables when they already exist.
         if (Schema::connection('tenant')->hasTable('customers')) {
             return;
         }
 
-        $central = $manager->centralConnection();
+        // Schema missing (first test or migrate:fresh wiped it). Release any open
+        // RefreshDatabase transactions before DDL — SQLite auto-commits CREATE and
+        // would otherwise leave testing.sqlite / transaction state corrupted.
+        $released = $this->releaseSharedTransactions($manager);
 
-        if ($manager->centralDriver() === 'mysql') {
+        try {
+            $manager->migrateTenant();
+        } finally {
+            $this->reopenSharedTransactions($released);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function releaseSharedTransactions(TenantManager $manager): array
+    {
+        $released = [];
+
+        foreach ($this->sharedSchemaConnections($manager) as $name) {
             try {
-                DB::connection($central)->unprepared('COMMIT');
+                $connection = DB::connection($name);
+                $pdo = $connection->getPdo();
+                if ($pdo && $pdo->inTransaction()) {
+                    $connection->commit();
+                    $released[] = $name;
+                }
             } catch (\Throwable) {
                 //
             }
         }
 
-        $manager->migrateTenant();
+        return $released;
+    }
 
-        if ($manager->centralDriver() === 'mysql') {
-            DB::connection($central)->beginTransaction();
+    /**
+     * @param  list<string>  $connections
+     */
+    private function reopenSharedTransactions(array $connections): void
+    {
+        foreach ($connections as $name) {
+            try {
+                DB::connection($name)->beginTransaction();
+            } catch (\Throwable) {
+                //
+            }
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sharedSchemaConnections(TenantManager $manager): array
+    {
+        return array_values(array_unique(array_filter([
+            $manager->centralConnection(),
+            'tenant',
+            'sqlite',
+            (string) config('database.default'),
+        ])));
     }
 
     protected function tenantUrl(string $uri): string

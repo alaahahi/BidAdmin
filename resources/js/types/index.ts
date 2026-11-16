@@ -33,7 +33,13 @@ export interface SharedData {
     settings: AppSettings;
     tenant?: { id: number; name: string; slug: string } | null;
     balance: number | null;
-    flash: { success?: string | null; error?: string | null; token?: string | null };
+    flash: {
+        success?: string | null;
+        error?: string | null;
+        token?: string | null;
+        migrate_output?: string | null;
+        migrate_scope?: string | null;
+    };
     [key: string]: unknown;
 }
 
@@ -103,6 +109,7 @@ export interface Customer {
     id: number;
     name: string;
     code: string | null;
+    login_code?: string | null;
     email: string | null;
     phone_code: string | null;
     phone: string | null;

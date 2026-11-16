@@ -13,6 +13,15 @@ class Account extends Model
 
     public const PROVIDERS = ['copart' => 'Copart', 'iaai' => 'IAAI', 'manheim' => 'Manheim', 'edgepipeline' => 'EdgePipeline', 'npa' => 'NPA'];
 
+    /** Providers exposed to the mobile customer app. */
+    public const APP_PROVIDERS = ['copart', 'iaai', 'manheim'];
+
+    public const START_URLS = [
+        'copart' => 'https://www.copart.com',
+        'iaai' => 'https://www.iaai.com',
+        'manheim' => 'https://www.manheim.com',
+    ];
+
     public const REGIONS = [
         'copart' => ['USA', 'CAN', 'UK', 'UAE', 'DE'],
         'iaai' => ['USA', 'CAN', 'UK'],
@@ -74,5 +83,22 @@ class Account extends Model
     public function histories()
     {
         return $this->hasMany(AssignmentHistory::class)->latest();
+    }
+
+    public function auctionSession()
+    {
+        return $this->hasOne(AuctionSession::class);
+    }
+
+    public function appLabel(): string
+    {
+        $parts = array_filter([$this->company, $this->username]);
+
+        return $parts ? implode(' · ', $parts) : ($this->username ?: 'Account #'.$this->id);
+    }
+
+    public function startUrl(): ?string
+    {
+        return self::START_URLS[$this->provider] ?? null;
     }
 }

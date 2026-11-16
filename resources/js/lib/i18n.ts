@@ -347,6 +347,107 @@ const translations: Record<string, { ar: string; ckb: string }> = {
         ar: 'لا توجد حسابات مسؤول في قاعدة بيانات هذا المستأجر.',
         ckb: 'هیچ هەژماری ئەدمین لە داتابەیسی ئەم کرێچیەدا نییە.',
     },
+
+    // Super system settings / ops (ADD only)
+    'System Settings': { ar: 'إعدادات النظام', ckb: 'ڕێکخستنەکانی سیستەم' },
+    'Run migrations and inspect application error logs. Super admin only.': {
+        ar: 'تشغيل المايغريشن وعرض سجلات الأخطاء. للمشرف العام فقط.',
+        ckb: 'جێبەجێکردنی مایگرەیشن و بینینی لۆگی هەڵەکان. تەنها سوپەر ئەدمین.',
+    },
+    Migrations: { ar: 'المايغريشن', ckb: 'مایگرەیشن' },
+    'Separate databases mode is enabled.': {
+        ar: 'وضع قواعد البيانات المنفصلة مفعّل.',
+        ckb: 'دۆخی داتابەیسی جیاواز چالاکە.',
+    },
+    'Shared database mode: central and tenant tables may share one DB.': {
+        ar: 'وضع قاعدة مشتركة: جداول المركز والمستأجر قد تكون في نفس القاعدة.',
+        ckb: 'دۆخی داتابەیسی هاوبەش: خشتەکانی ناوەند و کرێچی لەوانەیە لە یەک داتابەیس بن.',
+    },
+    'Central migrations': { ar: 'مايغريشن المركز', ckb: 'مایگرەیشنی ناوەند' },
+    'Tenant migrations': { ar: 'مايغريشن المستأجرين', ckb: 'مایگرەیشنی کرێچیەکان' },
+    Ran: { ar: 'تم التشغيل', ckb: 'جێبەجێکرا' },
+    'Last ran': { ar: 'آخر تشغيل', ckb: 'دوایین جێبەجێکردن' },
+    'Run central migrations': { ar: 'تشغيل مايغريشن المركز', ckb: 'جێبەجێکردنی مایگرەیشنی ناوەند' },
+    'Run tenant migrations': { ar: 'تشغيل مايغريشن المستأجرين', ckb: 'جێبەجێکردنی مایگرەیشنی کرێچیەکان' },
+    'Running...': { ar: 'جاري التشغيل...', ckb: 'لە جێبەجێکردندایە...' },
+    'Run central migrations now? This cannot be undone easily.': {
+        ar: 'تشغيل مايغريشن المركز الآن؟ يصعب التراجع عن ذلك.',
+        ckb: 'ئێستا مایگرەیشنی ناوەند جێبەجێ بکرێت؟ هەڵوەشاندنەوەی ئاسان نییە.',
+    },
+    'Run tenant migrations for all tenants now?': {
+        ar: 'تشغيل مايغريشن كل المستأجرين الآن؟',
+        ckb: 'ئێستا مایگرەیشن بۆ هەموو کرێچیەکان جێبەجێ بکرێت؟',
+    },
+    'Command output': { ar: 'مخرجات الأمر', ckb: 'دەرئەنجامی فەرمان' },
+    'Error logs': { ar: 'سجلات الأخطاء', ckb: 'لۆگی هەڵەکان' },
+    'Shows the last lines of the selected log file without loading the entire file.': {
+        ar: 'يعرض آخر أسطر ملف السجل المحدد دون تحميل الملف بالكامل.',
+        ckb: 'دوایین هێڵەکانی فایلی لۆگی هەڵبژێردراو پیشان دەدات بەبێ بارکردنی تەواوی فایل.',
+    },
+    Refresh: { ar: 'تحديث', ckb: 'نوێکردنەوە' },
+    Download: { ar: 'تنزيل', ckb: 'داگرتن' },
+    'Clear log': { ar: 'مسح السجل', ckb: 'سڕینەوەی لۆگ' },
+    'Clearing...': { ar: 'جاري المسح...', ckb: 'لە سڕینەوەدایە...' },
+    'Clear this log file? Contents will be permanently removed.': {
+        ar: 'مسح ملف السجل؟ سيتم حذف المحتوى نهائياً.',
+        ckb: 'ئەم فایلی لۆگە بسڕدرێتەوە؟ ناوەڕۆک بۆ هەمیشە دەسڕدرێتەوە.',
+    },
+    'Log file': { ar: 'ملف السجل', ckb: 'فایلی لۆگ' },
+    Lines: { ar: 'الأسطر', ckb: 'هێڵەکان' },
+    'Showing tail only': { ar: 'عرض النهاية فقط', ckb: 'تەنها کۆتایی پیشان دەدرێت' },
+    'Log file not found.': { ar: 'ملف السجل غير موجود.', ckb: 'فایلی لۆگ نەدۆزرایەوە.' },
+    'Log is empty.': { ar: 'السجل فارغ.', ckb: 'لۆگ بەتاڵە.' },
+
+    // Flutter customer app (new keys only)
+    'App Login Code': { ar: 'رمز دخول التطبيق', ckb: 'کۆدی چوونەژوورەوەی ئەپ' },
+    '8-character code for the Flutter customer app. Keep it private.': {
+        ar: 'رمز من 8 أحرف لتطبيق العملاء. احتفظ به سرياً.',
+        ckb: 'کۆدی ٨ پیتی بۆ ئەپی کڕیار. بە نهێنی بهێڵەرەوە.',
+    },
+    Regenerate: { ar: 'إعادة توليد', ckb: 'دروستکردنەوە' },
+    Show: { ar: 'إظهار', ckb: 'پیشاندان' },
+    Hide: { ar: 'إخفاء', ckb: 'شاردنەوە' },
+    Copy: { ar: 'نسخ', ckb: 'لەبەرگرتنەوە' },
+    Session: { ar: 'الجلسة', ckb: 'دانیشتن' },
+    'Auction Session': { ar: 'جلسة المزاد', ckb: 'دانیشتنی مەزاد' },
+    'Paste or upload cookies and localStorage JSON captured from a logged-in browser. Stored encrypted for the mobile app.': {
+        ar: 'الصق أو ارفع JSON للكوكيز وlocalStorage من متصفح مسجّل الدخول. تُحفظ مشفّرة للتطبيق.',
+        ckb: 'JSON ی کووکی و localStorage لە وێبگەڕی داخڵبوو بلکێنە یان باربکە. بۆ ئەپ بە شێوەیەکی کۆدکراو پاشەکەوت دەکرێت.',
+    },
+    'Cookies JSON': { ar: 'JSON للكوكيز', ckb: 'JSON ی کووکی' },
+    'localStorage JSON': { ar: 'JSON لـ localStorage', ckb: 'JSON ی localStorage' },
+    'User agent': { ar: 'وكيل المستخدم', ckb: 'یوزەر ئەجێنت' },
+    'Expires at': { ar: 'تنتهي في', ckb: 'بەسەردەچێت لە' },
+    'Save Session': { ar: 'حفظ الجلسة', ckb: 'پاشەکەوتکردنی دانیشتن' },
+    Test: { ar: 'اختبار', ckb: 'تاقیکردنەوە' },
+    'Session Status': { ar: 'حالة الجلسة', ckb: 'دۆخی دانیشتن' },
+    Status: { ar: 'الحالة', ckb: 'دۆخ' },
+    Valid: { ar: 'صالحة', ckb: 'دروست' },
+    Expired: { ar: 'منتهية', ckb: 'بەسەرچوو' },
+    Missing: { ar: 'غير موجودة', ckb: 'نییە' },
+    'No session': { ar: 'لا توجد جلسة', ckb: 'هیچ دانیشتنێک نییە' },
+    Captured: { ar: 'تم الالتقاط', ckb: 'گیراوە' },
+    Expires: { ar: 'تنتهي', ckb: 'بەسەردەچێت' },
+    Cookies: { ar: 'الكوكيز', ckb: 'کووکی' },
+    Present: { ar: 'موجودة', ckb: 'هەیە' },
+    Empty: { ar: 'فارغة', ckb: 'بەتاڵ' },
+    'Last test': { ar: 'آخر اختبار', ckb: 'دوایین تاقیکردنەوە' },
+    'Blocked Countries': { ar: 'الدول المحظورة', ckb: 'وڵاتە قەدەغەکراوەکان' },
+    'Comma-separated ISO codes (e.g. IR,KP). Blocks Flutter app login by IP country.': {
+        ar: 'رموز ISO مفصولة بفواصل (مثل IR,KP). تحظر دخول تطبيق العملاء حسب الدولة.',
+        ckb: 'کۆدی ISO بە کۆما جیاکراو (وەک IR,KP). چوونەژوورەوەی ئەپ بەپێی وڵات قەدەغە دەکات.',
+    },
+
+    // MCP (ADD only)
+    MCP: { ar: 'MCP', ckb: 'MCP' },
+    'Connect Cursor or other MCP clients to this tenant with a Sanctum API token.': {
+        ar: 'اربط Cursor أو عملاء MCP الآخرين بهذا المستأجر باستخدام رمز Sanctum API.',
+        ckb: 'Cursor یان کڕیارەکانی تری MCP بەم کرێچییە ببەستەوە بە توکنی Sanctum API.',
+    },
+    'Tenant MCP URL': { ar: 'رابط MCP للمستأجر', ckb: 'بەستەری MCP ی کرێچی' },
+    Authentication: { ar: 'المصادقة', ckb: 'ڕەسەنایەتی' },
+    'Copy snippet': { ar: 'نسخ المقطع', ckb: 'لەبەرگرتنەوەی پارچەکە' },
+    Copied: { ar: 'تم النسخ', ckb: 'لەبەرگیرایەوە' },
 };
 
 function buildDict(lang: 'ar' | 'ckb'): Record<string, string> {

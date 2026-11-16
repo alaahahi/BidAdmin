@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Super\AuthController;
+use App\Http\Controllers\Super\SystemSettingsController;
 use App\Http\Controllers\Super\TenantController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,5 +22,10 @@ Route::prefix('super')->name('super.')->group(function () {
         Route::post('tenants/{managedTenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('tenants/{managedTenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
         Route::delete('tenants/{managedTenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+
+        Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings');
+        Route::post('system-settings/migrate', [SystemSettingsController::class, 'migrate'])->name('system-settings.migrate');
+        Route::post('system-settings/logs/clear', [SystemSettingsController::class, 'clearLog'])->name('system-settings.logs.clear');
+        Route::get('system-settings/logs/download', [SystemSettingsController::class, 'downloadLog'])->name('system-settings.logs.download');
     });
 });

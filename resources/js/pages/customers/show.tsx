@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import { fmtDateTime, money, useTz } from '@/lib/format';
 import type { Account, AnalyticsData, Bid, Customer, Invoice, Paginated, WatchItem } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { KeyRound, Pencil, Trash2 } from 'lucide-react';
+import { Copy, Eye, EyeOff, KeyRound, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -23,12 +23,49 @@ interface Props {
     analytics?: AnalyticsData;
 }
 
+function AppLoginCodeCard({ customer }: { customer: Customer }) {
+    const [show, setShow] = useState(false);
+    const code = customer.login_code ?? '';
+    const masked = code ? '••••' + code.slice(-4) : '—';
+    return (
+        <Card>
+            <CardHeader title="App Login Code" subtitle="8-character code for the Flutter customer app. Keep it private." />
+            <div className="space-y-4 p-5">
+                <div className="flex flex-wrap items-center gap-3">
+                    <code className="bg-muted rounded px-3 py-2 text-lg tracking-widest">{show ? code || '—' : masked}</code>
+                    <ToolbarButton small icon={show ? <EyeOff /> : <Eye />} onClick={() => setShow((v) => !v)} disabled={!code}>
+                        {show ? 'Hide' : 'Show'}
+                    </ToolbarButton>
+                    {show && code && (
+                        <ToolbarButton
+                            small
+                            icon={<Copy />}
+                            onClick={() => {
+                                navigator.clipboard?.writeText(code);
+                            }}
+                        >
+                            Copy
+                        </ToolbarButton>
+                    )}
+                    <ToolbarButton
+                        primary
+                        onClick={() => confirm('Regenerate app login code? Existing app sessions keep working until tokens expire.') && router.post(route('customers.login-code', customer.id), {}, { preserveScroll: true })}
+                    >
+                        Regenerate
+                    </ToolbarButton>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
 function CredentialsTab({ customer, tokens }: { customer: Customer; tokens: Props['tokens'] }) {
     const tz = useTz();
     const { data, setData, put, processing, errors } = useForm({ email: customer.user?.email ?? customer.email ?? '', password: '' });
     const [tokenName, setTokenName] = useState('browser-extension');
     return (
         <div className="grid gap-4 lg:grid-cols-2">
+            <AppLoginCodeCard customer={customer} />
             <Card>
                 <CardHeader title="Portal Login" subtitle="The customer signs in to BidAdmin with this email and sees only their own accounts, bids, watchlist and invoices." />
                 <form
@@ -49,7 +86,7 @@ function CredentialsTab({ customer, tokens }: { customer: Customer; tokens: Prop
                     </ToolbarButton>
                 </form>
             </Card>
-            <Card>
+            <Card className="lg:col-span-2">
                 <CardHeader title="API Tokens" subtitle="For the browser extension. Events sent with this token are attributed to this customer, with the request IP." />
                 <div className="space-y-3 p-5">
                     {!customer.user ? (

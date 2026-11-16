@@ -13,6 +13,17 @@ import { Copy, Eye, EyeOff, FileText, Pencil, Trash2, Upload } from 'lucide-reac
 import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
+interface AuctionSessionInfo {
+    status: 'valid' | 'expired' | 'missing';
+    user_agent: string | null;
+    captured_at: string | null;
+    expires_at: string | null;
+    has_cookies: boolean;
+    has_local_storage: boolean;
+    cookies_json: string | null;
+    local_storage_json: string | null;
+}
+
 interface Props {
     account: Account;
     tab: string;
@@ -26,6 +37,7 @@ interface Props {
     history?: { id: number; subject_type: string; subject_name: string; action: string; created_at: string; user?: { name: string } | null }[];
     documentGroups?: Record<string, string[]>;
     analytics?: AnalyticsData;
+    session?: AuctionSessionInfo | null;
 }
 
 function EditAccount({ account, options, onClose }: { account: Account; options: Props['options']; onClose: () => void }) {
@@ -287,6 +299,104 @@ function Assignment({ account, kind, all, history }: { account: Account; kind: '
     );
 }
 
+function SessionTab({ account, session }: { account: Account; session?: AuctionSessionInfo | null }) {
+    const tz = useTz();
+    const { data, setData, put, processing, errors } = useForm({
+        cookies: session?.cookies_json ?? '{\n  \n}',
+        local_storage: session?.local_storage_json ?? '{\n  \n}',
+        user_agent: session?.user_agent ?? '',
+        expires_at: session?.expires_at ? session.expires_at.slice(0, 16) : '',
+    });
+    const [testResult, setTestResult] = useState<{ status: string; valid: boolean; message: string } | null>(null);
+    const [testing, setTesting] = useState(false);
+    const status = session?.status ?? 'missing';
+    const tone = status === 'valid' ? 'paid' : status === 'expired' ? 'overdue' : 'pending';
+
+    const loadFile = (file: File | null, field: 'cookies' | 'local_storage') => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setData(field, String(reader.result ?? ''));
+        reader.readAsText(file);
+    };
+
+    const runTest = async () => {
+        setTesting(true);
+        try {
+            const r = await axios.post(route('accounts.session.test', account.id));
+            setTestResult(r.data);
+            toast.success(r.data.message ?? 'Test complete');
+        } catch {
+            toast.error('Session test failed');
+        } finally {
+            setTesting(false);
+        }
+    };
+
+    return (
+        <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+                <CardHeader
+                    title="Auction Session"
+                    subtitle="Paste or upload cookies and localStorage JSON captured from a logged-in browser. Stored encrypted for the mobile app."
+                    actions={
+                        <Badge tone={tone}>
+                            {status === 'valid' ? 'Valid' : status === 'expired' ? 'Expired' : 'No session'}
+                        </Badge>
+                    }
+                />
+                <form
+                    className="space-y-4 p-5"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        put(route('accounts.session', account.id), { preserveScroll: true });
+                    }}
+                >
+                    <Field label="Cookies JSON" error={errors.cookies}>
+                        <TextArea rows={8} value={data.cookies} onChange={(e) => setData('cookies', e.target.value)} className="font-mono text-xs" />
+                        <input type="file" accept="application/json,.json,.txt" className="mt-2 text-xs" onChange={(e) => loadFile(e.target.files?.[0] ?? null, 'cookies')} />
+                    </Field>
+                    <Field label="localStorage JSON" error={errors.local_storage}>
+                        <TextArea rows={8} value={data.local_storage} onChange={(e) => setData('local_storage', e.target.value)} className="font-mono text-xs" />
+                        <input type="file" accept="application/json,.json,.txt" className="mt-2 text-xs" onChange={(e) => loadFile(e.target.files?.[0] ?? null, 'local_storage')} />
+                    </Field>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="User agent" error={errors.user_agent}>
+                            <TextInput value={data.user_agent} onChange={(e) => setData('user_agent', e.target.value)} />
+                        </Field>
+                        <Field label="Expires at" error={errors.expires_at}>
+                            <TextInput type="datetime-local" value={data.expires_at} onChange={(e) => setData('expires_at', e.target.value)} />
+                        </Field>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <ToolbarButton type="submit" primary disabled={processing}>
+                            Save Session
+                        </ToolbarButton>
+                        <ToolbarButton type="button" onClick={runTest} disabled={testing}>
+                            Test
+                        </ToolbarButton>
+                    </div>
+                </form>
+            </Card>
+            <Card className="h-fit">
+                <CardHeader title="Session Status" />
+                <InfoRow label="Status">
+                    <Badge tone={tone}>{status === 'valid' ? 'Valid' : status === 'expired' ? 'Expired' : 'Missing'}</Badge>
+                </InfoRow>
+                <InfoRow label="Captured">{session?.captured_at ? fmtDateTime(session.captured_at, tz) : '—'}</InfoRow>
+                <InfoRow label="Expires">{session?.expires_at ? fmtDateTime(session.expires_at, tz) : '—'}</InfoRow>
+                <InfoRow label="Cookies">{session?.has_cookies ? 'Present' : 'Empty'}</InfoRow>
+                <InfoRow label="localStorage">{session?.has_local_storage ? 'Present' : 'Empty'}</InfoRow>
+                {testResult && (
+                    <div className="border-t p-5 text-sm">
+                        <div className="font-medium">Last test</div>
+                        <p className="text-muted-foreground text-xs">{testResult.message}</p>
+                    </div>
+                )}
+            </Card>
+        </div>
+    );
+}
+
 function NoticeSettings({ account }: { account: Account }) {
     const { data, setData, put, processing } = useForm({
         login_notice_title: account.login_notice_title ?? '',
@@ -328,6 +438,7 @@ export default function AccountShow(props: Props) {
         ? [
               ['overview', 'Overview'],
               ['credentials', 'Credentials'],
+              ['session', 'Session'],
               ['documents', 'Documents'],
               ['bids', 'Active Bids'],
               ['invoices', 'Invoices'],
@@ -430,6 +541,7 @@ export default function AccountShow(props: Props) {
                 </div>
             )}
             {tab === 'credentials' && <Credentials account={account} isAdmin={isAdmin} />}
+            {tab === 'session' && isAdmin && <SessionTab account={account} session={props.session} />}
             {tab === 'documents' && props.documentGroups && <Documents account={account} groups={props.documentGroups} />}
             {tab === 'bids' && (
                 <>

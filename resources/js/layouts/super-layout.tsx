@@ -19,6 +19,9 @@ export default function SuperLayout({ children, title }: { children: ReactNode; 
                         <Link href={route('super.tenants.create')} className="text-muted-foreground hover:text-foreground text-sm">
                             {t('Create Tenant')}
                         </Link>
+                        <Link href={route('super.system-settings')} className="text-muted-foreground hover:text-foreground text-sm">
+                            {t('System Settings')}
+                        </Link>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <button

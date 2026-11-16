@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AuctionSessionRequest;
 use App\Models\Account;
 use App\Models\AccountDocument;
 use App\Models\ActivityLog;
 use App\Models\AssignmentHistory;
 use App\Models\Broker;
 use App\Models\Customer;
+use App\Services\AuctionSessionService;
 use App\Support\Csv;
 use App\Support\Lists;
 use App\Support\Scope;
@@ -18,6 +20,8 @@ use Inertia\Inertia;
 
 class AccountController extends Controller
 {
+    public function __construct(private AuctionSessionService $sessions) {}
+
     /** Customers only see invoice figures for vehicles they won themselves. */
     private static function own($q)
     {
@@ -129,8 +133,9 @@ class AccountController extends Controller
         $account = Scope::accounts(Account::withTrashed())->findOrFail($id);
         $tab = $r->input('tab', 'overview');
         $isAdmin = ! Scope::isCustomer();
-        $account->load($isAdmin ? ['customers', 'brokers', 'documents'] : []);
+        $account->load($isAdmin ? ['customers', 'brokers', 'documents', 'auctionSession'] : []);
         $inv = self::own($account->invoices()->getQuery());
+        $session = $account->auctionSession;
         $data = [
             'account' => $account,
             'tab' => $tab,
@@ -147,6 +152,17 @@ class AccountController extends Controller
             ],
             'options' => $this->options(),
             'isAdmin' => $isAdmin,
+            'session' => $session ? [
+                'status' => $session->status(),
+                'user_agent' => $session->user_agent,
+                'captured_at' => $session->captured_at?->toIso8601String(),
+                'expires_at' => $session->expires_at?->toIso8601String(),
+                'has_cookies' => ! empty($session->cookies),
+                'has_local_storage' => ! empty($session->local_storage),
+                // Admins editing the form need the decrypted JSON (never sent to the app API for passwords).
+                'cookies_json' => $isAdmin ? json_encode($session->cookies ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
+                'local_storage_json' => $isAdmin ? json_encode($session->local_storage ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null,
+            ] : null,
         ];
         $data['bids'] = Scope::owned($account->bids()->getQuery())->with('customer:id,name')->latest('placed_at')->paginate(10, ['*'], 'bids_page')->withQueryString();
         $data['invoices'] = self::own($account->invoices()->getQuery())->with('wonBy:id,name')->latest('invoice_date')->paginate(10, ['*'], 'inv_page')->withQueryString();
@@ -161,6 +177,18 @@ class AccountController extends Controller
         }
 
         return Inertia::render('accounts/show', $data);
+    }
+
+    public function upsertSession(AuctionSessionRequest $r, Account $account)
+    {
+        $this->sessions->upsert($account, $r->validated());
+
+        return back()->with('success', 'Auction session saved.');
+    }
+
+    public function testSession(Account $account)
+    {
+        return response()->json($this->sessions->test($account));
     }
 
     public function update(Request $r, Account $account)

@@ -5,8 +5,8 @@ import AppLayout from '@/layouts/app-layout';
 import { fmtDate, fmtDateTime, useTz } from '@/lib/format';
 import type { SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Moon, Plus, Sun, Trash2, Upload } from 'lucide-react';
-import { ReactNode, useRef, useState } from 'react';
+import { CheckCircle2, Copy, Moon, Plus, Sun, Trash2, Upload } from 'lucide-react';
+import { ReactNode, useMemo, useRef, useState } from 'react';
 
 interface Token {
     id: number;
@@ -128,8 +128,42 @@ function SimpleForm({ section, initial, children }: { section: string; initial: 
 function Development({ tokens }: { tokens: Token[] }) {
     const tz = useTz();
     const [open, setOpen] = useState(false);
+    const [copied, setCopied] = useState<'url' | 'snippet' | null>(null);
     const { data, setData, post, processing, errors, reset } = useForm({ name: '', expires_in_days: '' });
+    const { tenant } = usePage<SharedData>().props;
     const base = route('home').replace(/\/$/, '');
+    const mcpUrl = useMemo(() => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : base.replace(/\/[^/]+$/, '') || base;
+        const slug = tenant?.slug ?? base.split('/').filter(Boolean).pop() ?? 'tenant';
+        return `${origin.replace(/\/$/, '')}/${slug}/mcp`;
+    }, [base, tenant?.slug]);
+    const mcpSnippet = useMemo(
+        () =>
+            JSON.stringify(
+                {
+                    mcpServers: {
+                        bidadmin: {
+                            url: mcpUrl,
+                            headers: {
+                                Authorization: 'Bearer <your-api-token>',
+                            },
+                        },
+                    },
+                },
+                null,
+                2,
+            ),
+        [mcpUrl],
+    );
+    const copyText = async (value: string, which: 'url' | 'snippet') => {
+        try {
+            await navigator.clipboard?.writeText(value);
+            setCopied(which);
+            window.setTimeout(() => setCopied(null), 1500);
+        } catch {
+            //
+        }
+    };
     return (
         <>
             <Section title="API Keys" subtitle="Admin keys can post events for any customer by passing customer_id. Customer tokens are created on each customer's Credentials tab.">
@@ -163,6 +197,36 @@ POST ${base}/api/watchlist  {"account_id":1,"lot_number":"46121395","action":"ad
 Headers: Authorization: Bearer <token>, Accept: application/json`}</pre>
                 <p className="text-muted-foreground mt-2">The customer is taken from the token and the request IP is recorded automatically.</p>
             </Card>
+            <Section title="MCP" subtitle="Connect Cursor or other MCP clients to this tenant with a Sanctum API token.">
+                <Card className="space-y-4 p-5 text-xs">
+                    <div>
+                        <h3 className="mb-1 text-sm font-semibold">Tenant MCP URL</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <code className="bg-muted rounded px-2 py-1 text-[11px] break-all">{mcpUrl}</code>
+                            <ToolbarButton small icon={<Copy />} onClick={() => copyText(mcpUrl, 'url')}>
+                                {copied === 'url' ? 'Copied' : 'Copy'}
+                            </ToolbarButton>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="mb-1 text-sm font-semibold">Authentication</h3>
+                        <p className="text-muted-foreground mb-2">
+                            Send an admin API token from the table above as{' '}
+                            <code className="bg-muted rounded px-1">Authorization: Bearer &lt;token&gt;</code>.
+                        </p>
+                    </div>
+                    <div>
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-sm font-semibold">Cursor <code className="text-[11px]">.cursor/mcp.json</code></h3>
+                            <ToolbarButton small icon={<Copy />} onClick={() => copyText(mcpSnippet, 'snippet')}>
+                                {copied === 'snippet' ? 'Copied' : 'Copy snippet'}
+                            </ToolbarButton>
+                        </div>
+                        <pre className="bg-muted overflow-x-auto rounded p-3 leading-relaxed">{mcpSnippet}</pre>
+                        <p className="text-muted-foreground mt-2">Replace <code className="bg-muted rounded px-1">&lt;your-api-token&gt;</code> with a real API key. Save as <code className="bg-muted rounded px-1">.cursor/mcp.json</code> in your project.</p>
+                    </div>
+                </Card>
+            </Section>
             <Modal open={open} onClose={() => setOpen(false)} title="Create API Key">
                 <form
                     className="space-y-4"
@@ -267,7 +331,7 @@ export default function SettingsPage({ tab, values, timezones, tokens, team }: P
                 <Section title="App Configuration" subtitle="General behaviour of the dashboard and customer portal">
                     <SimpleForm
                         section="app"
-                        initial={{ currency: values.currency ?? 'USD', customer_portal: bool('customer_portal'), customers_can_see_invoices: bool('customers_can_see_invoices'), default_per_page: values.default_per_page ?? '10', session_lifetime: values.session_lifetime ?? '120' }}
+                        initial={{ currency: values.currency ?? 'USD', customer_portal: bool('customer_portal'), customers_can_see_invoices: bool('customers_can_see_invoices'), default_per_page: values.default_per_page ?? '10', session_lifetime: values.session_lifetime ?? '120', blocked_countries: values.blocked_countries ?? '' }}
                     >
                         {(d, set) => (
                             <>
@@ -279,6 +343,9 @@ export default function SettingsPage({ tab, values, timezones, tokens, team }: P
                                 </Field>
                                 <Field label="Customer session lifetime (minutes)">
                                     <TextInput type="number" value={String(d.session_lifetime)} onChange={(e) => set('session_lifetime', e.target.value)} />
+                                </Field>
+                                <Field label="Blocked Countries" hint="Comma-separated ISO codes (e.g. IR,KP). Blocks Flutter app login by IP country.">
+                                    <TextInput value={String(d.blocked_countries ?? '')} onChange={(e) => set('blocked_countries', e.target.value)} placeholder="IR,KP" />
                                 </Field>
                                 <label className="flex items-center gap-2 text-sm">
                                     <input type="checkbox" checked={!!d.customer_portal} onChange={(e) => set('customer_portal', e.target.checked)} /> Enable customer portal logins

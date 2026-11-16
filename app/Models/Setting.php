@@ -24,6 +24,7 @@ class Setting extends Model
         'customers_can_see_invoices' => '1',
         'default_per_page' => '10',
         'session_lifetime' => '120',
+        'blocked_countries' => '', // comma-separated ISO codes, e.g. IR,KP
     ];
 
     public static function all_settings(): array
