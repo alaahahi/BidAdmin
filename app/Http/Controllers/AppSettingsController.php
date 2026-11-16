@@ -72,7 +72,9 @@ class AppSettingsController extends Controller
     public function createToken(Request $r)
     {
         $data = $r->validate(['name' => ['required', 'string', 'max:60'], 'expires_in_days' => ['nullable', 'integer', 'min:1', 'max:3650']]);
-        $token = $r->user()->createToken($data['name'], ['*'], isset($data['expires_in_days']) ? now()->addDays((int) $data['expires_in_days']) : null);
+        // Default permanent (null); optional expires_in_days only when explicitly set.
+        $expiresAt = isset($data['expires_in_days']) ? now()->addDays((int) $data['expires_in_days']) : null;
+        $token = $r->user()->createToken($data['name'], ['*'], $expiresAt);
 
         return back()->with('token', $token->plainTextToken)->with('success', 'API key created. Copy it now, it will not be shown again.');
     }

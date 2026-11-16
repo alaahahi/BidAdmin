@@ -199,7 +199,8 @@ class CustomerController extends Controller
     {
         abort_unless($customer->user, 422, 'Create a login for this customer first.');
         $name = $r->validate(['name' => ['nullable', 'string', 'max:60']])['name'] ?? 'extension';
-        $token = $customer->user->createToken($name ?: 'extension', ['events:write']);
+        // Permanent unless revoked; null expires_at (settings tokens may set optional days).
+        $token = $customer->user->createToken($name ?: 'extension', ['events:write'], null);
 
         return back()->with('token', $token->plainTextToken)->with('success', 'Token created. Copy it now, it will not be shown again.');
     }

@@ -64,6 +64,60 @@ class AppApiTest extends TestCase
             ->getJson('/api/app/limits')
             ->assertOk()
             ->assertJsonPath('data.bid_limit', $customer->bid_limit);
+
+        $pat = $customer->fresh()->user->tokens()->latest('id')->first();
+        $this->assertNotNull($pat);
+        $this->assertNull($pat->expires_at);
+        $this->assertSame(['app'], $pat->abilities);
+    }
+
+    public function test_app_login_token_is_permanent_and_logout_revokes(): void
+    {
+        $customer = Customer::factory()->create(['login_code' => 'PERMCODE']);
+
+        [$response] = $this->loginCustomer($customer, ['code' => 'PERMCODE', 'device_name' => 'Pixel 8']);
+        $response->assertOk();
+        $token = $response->json('token');
+
+        $pat = $customer->fresh()->user->tokens()->where('name', 'Pixel 8')->first();
+        $this->assertNotNull($pat);
+        $this->assertNull($pat->expires_at);
+
+        $this->withHeaders($this->appHeaders($token))
+            ->postJson('/api/app/logout')
+            ->assertOk()
+            ->assertJsonPath('message', 'Logged out.');
+
+        $this->assertDatabaseMissing('personal_access_tokens', ['id' => $pat->id]);
+
+        // HTTP tests keep the auth guard user across requests; clear so Bearer is re-checked.
+        $this->app['auth']->forgetGuards();
+
+        $this->withHeaders($this->appHeaders($token))
+            ->getJson('/api/app/limits')
+            ->assertUnauthorized();
+    }
+
+    public function test_app_relogin_same_device_replaces_token(): void
+    {
+        $customer = Customer::factory()->create(['login_code' => 'REPLCODE']);
+
+        [$first] = $this->loginCustomer($customer, ['code' => 'REPLCODE', 'device_name' => 'iPhone']);
+        $old = $first->json('token');
+
+        [$second] = $this->loginCustomer($customer, ['code' => 'REPLCODE', 'device_name' => 'iPhone']);
+        $new = $second->json('token');
+
+        $this->assertNotSame($old, $new);
+        $this->assertSame(1, $customer->fresh()->user->tokens()->where('name', 'iPhone')->count());
+
+        $this->withHeaders($this->appHeaders($old))
+            ->getJson('/api/app/limits')
+            ->assertUnauthorized();
+
+        $this->withHeaders($this->appHeaders($new))
+            ->getJson('/api/app/limits')
+            ->assertOk();
     }
 
     public function test_blocked_country_rejects_app_login(): void

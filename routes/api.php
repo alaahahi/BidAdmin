@@ -19,6 +19,7 @@ Route::prefix('app')->group(function () {
     Route::post('/login', [AppAuthController::class, 'login'])->middleware('throttle:app-login');
 
     Route::middleware(['auth:sanctum', 'ability:app', 'throttle:120,1'])->group(function () {
+        Route::post('/logout', [AppAuthController::class, 'logout']);
         Route::get('/accounts', [AppAccountController::class, 'index']);
         Route::get('/accounts/{id}/session', [AppAccountController::class, 'session'])->whereNumber('id');
         Route::post('/events', [AppEventController::class, 'store']);

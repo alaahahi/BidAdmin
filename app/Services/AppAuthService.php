@@ -36,7 +36,11 @@ class AppAuthService
         return DB::connection('tenant')->transaction(function () use ($request, $customer, $deviceName, $platform, $appVersion) {
             $user = $this->ensureUser($customer);
             $app = trim($platform.' '.$appVersion);
-            $token = $user->createToken($deviceName ?: 'app', ['app']);
+            $name = $deviceName !== '' ? $deviceName : 'app';
+
+            // One permanent token per device name; null expires_at = no expiry (revoke via logout/UI).
+            $user->tokens()->where('name', $name)->delete();
+            $token = $user->createToken($name, ['app'], null);
 
             ActivityLog::create([
                 'type' => 'login',
@@ -59,6 +63,15 @@ class AppAuthService
                 'user' => $user,
             ];
         });
+    }
+
+    /** Revoke the current Sanctum Bearer token (app logout). */
+    public function logout(Request $request): void
+    {
+        $token = $request->user()?->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
     }
 
     public function ensureUser(Customer $customer): User

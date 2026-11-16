@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\AppLoginRequest;
 use App\Http\Resources\AppCustomerResource;
 use App\Services\AppAuthService;
+use Illuminate\Http\Request;
 
 class AppAuthController extends Controller
 {
@@ -27,5 +28,12 @@ class AppAuthController extends Controller
             'token_type' => 'Bearer',
             'customer' => (new AppCustomerResource($result['customer']))->resolve(),
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $this->auth->logout($request);
+
+        return response()->json(['message' => 'Logged out.']);
     }
 }
