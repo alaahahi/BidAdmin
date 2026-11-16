@@ -23,7 +23,7 @@ class Setting extends Model
         'customer_portal' => '1',
         'customers_can_see_invoices' => '1',
         'default_per_page' => '10',
-        'session_lifetime' => '120',
+        'session_lifetime' => '525600',
         'blocked_countries' => '', // comma-separated ISO codes, e.g. IR,KP
     ];
 

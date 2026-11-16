@@ -331,7 +331,7 @@ export default function SettingsPage({ tab, values, timezones, tokens, team }: P
                 <Section title="App Configuration" subtitle="General behaviour of the dashboard and customer portal">
                     <SimpleForm
                         section="app"
-                        initial={{ currency: values.currency ?? 'USD', customer_portal: bool('customer_portal'), customers_can_see_invoices: bool('customers_can_see_invoices'), default_per_page: values.default_per_page ?? '10', session_lifetime: values.session_lifetime ?? '120', blocked_countries: values.blocked_countries ?? '' }}
+                        initial={{ currency: values.currency ?? 'USD', customer_portal: bool('customer_portal'), customers_can_see_invoices: bool('customers_can_see_invoices'), default_per_page: values.default_per_page ?? '10', session_lifetime: values.session_lifetime ?? '525600', blocked_countries: values.blocked_countries ?? '' }}
                     >
                         {(d, set) => (
                             <>

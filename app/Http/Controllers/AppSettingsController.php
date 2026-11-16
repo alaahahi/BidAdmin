@@ -34,7 +34,7 @@ class AppSettingsController extends Controller
                 'customer_portal' => ['boolean'],
                 'customers_can_see_invoices' => ['boolean'],
                 'default_per_page' => ['required', Rule::in(['10', '25', '50', '100', 10, 25, 50, 100])],
-                'session_lifetime' => ['required', 'integer', 'min:5', 'max:10080'],
+                'session_lifetime' => ['required', 'integer', 'min:5', 'max:525600'],
                 'blocked_countries' => ['nullable', 'string', 'max:200'],
             ],
             'timezone' => ['timezone' => ['required', 'timezone'], 'invoice_timezone' => ['required', Rule::in(['account', 'invoice'])]],
